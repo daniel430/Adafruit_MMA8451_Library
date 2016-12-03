@@ -66,13 +66,17 @@ void Adafruit_MMA8451::writeRegister8(uint8_t reg, uint8_t value) {
 */
 /**************************************************************************/
 uint8_t Adafruit_MMA8451::readRegister8(uint8_t reg) {
-    Wire.beginTransmission(_i2caddr);
-    i2cwrite(reg);
-    Wire.endTransmission(false); // MMA8451 + friends uses repeated start!!
+  #ifdef _VARIANT_ARDUINO_DUE_X_
+    Wire.requestFrom((uint8_t) _i2caddr, (uint8_t) 1, (uint32_t) reg, (uint8_t) 1, (uint8_t) 0);
+  #else
+      Wire.beginTransmission(_i2caddr);
+      i2cwrite(reg);
+      Wire.endTransmission(false); // MMA8451 + friends uses repeated start!!
 
-    Wire.requestFrom(_i2caddr, 1);
-    if (! Wire.available()) return -1;
-    return (i2cread());
+      Wire.requestFrom(_i2caddr, 1);
+  #endif
+  if (! Wire.available()) return -1;
+  return (i2cread());
 }
 
 /**************************************************************************/
@@ -134,11 +138,16 @@ bool Adafruit_MMA8451::begin(uint8_t i2caddr) {
 
 void Adafruit_MMA8451::read(void) {
   // read x y z at once
-  Wire.beginTransmission(_i2caddr);
-  i2cwrite(MMA8451_REG_OUT_X_MSB);
-  Wire.endTransmission(false); // MMA8451 + friends uses repeated start!!
+  #ifdef _VARIANT_ARDUINO_DUE_X_
+    Wire.requestFrom((uint8_t) _i2caddr, (uint8_t) 6, (uint32_t) MMA8451_REG_OUT_X_MSB, (uint8_t) 1, (uint8_t) 0);
+  #else
+    Wire.beginTransmission(_i2caddr);
+    i2cwrite(MMA8451_REG_OUT_X_MSB);
+    Wire.endTransmission(false); // MMA8451 + friends uses repeated start!!
 
-  Wire.requestFrom(_i2caddr, 6);
+    Wire.requestFrom(_i2caddr, 6);
+  #endif
+
   x = Wire.read(); x <<= 8; x |= Wire.read(); x >>= 2;
   y = Wire.read(); y <<= 8; y |= Wire.read(); y >>= 2;
   z = Wire.read(); z <<= 8; z |= Wire.read(); z >>= 2;
